@@ -84,7 +84,7 @@ type UserPhishingScore struct {
 ## ✅ Checklist
 
 - [x] Crear nuevos modelos de datos
-- [ ] Implementar endpoints API
+- [x] Implementar endpoints API
 - [ ] Diseñar UI moderna
 - [ ] Añadir gráficos (Chart.js/D3.js)
 - [ ] Tests unitarios
@@ -108,16 +108,46 @@ type UserPhishingScore struct {
 - `DashboardSummary` - Resumen del dashboard
 - `AnalyticsService` - Métodos de cálculo
 
-### Cómo usar:
-```go
-service := models.NewAnalyticsService()
+---
 
-// Calcular score de un usuario
-scores := service.CalculateUserScores(results)
+## 📦 Fase 2: Completado ✅
 
-// Calcular analytics de campaña
-ca := service.CalculateCampaignAnalytics(campaign, results, events)
+### Endpoints API implementados:
 
-// Calcular resumen del dashboard
-summary := service.CalculateDashboardSummary(campaigns, results, events)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/analytics/dashboard` | Resumen del dashboard |
+| GET | `/api/analytics/campaign/{id}` | Analytics de campaña |
+| GET | `/api/analytics/campaign/{id}/time` | Análisis de tiempos |
+| GET | `/api/analytics/users/scores` | Scores de todos los usuarios |
+| GET | `/api/analytics/users/{email}/score` | Score de un usuario |
+| GET | `/api/analytics/users/at-risk` | Usuarios en riesgo |
+| GET | `/api/analytics/departments` | Métricas por departamento |
+| GET | `/api/analytics/risk/distribution` | Distribución de riesgo |
+
+### Archivos modificados/creados:
+- `controllers/api/analytics.go` - Nuevos endpoints
+- `controllers/api/server.go` - Rutas añadidas
+- `models/campaign.go` - Añadido GetEvents()
+- `TEST_PLAN.md` - Plan de pruebas completo
+
+---
+
+## 🚀 Cómo probar
+
+Ver `TEST_PLAN.md` para instrucciones completas.
+
+```bash
+# 1. Compilar
+go build
+
+# 2. Ejecutar migraciones
+sqlite3 gophish.db < db/db_sqlite3/migrations/20260302000000_modern_analytics.sql
+
+# 3. Ejecutar
+./gophish
+
+# 4. Probar endpoints
+curl -H "Authorization: Bearer API_KEY" \
+     http://localhost:3333/api/analytics/dashboard
 ```

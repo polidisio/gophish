@@ -1,0 +1,209 @@
+{{ define "modern_dashboard" }}
+{{ template "header" . }}
+
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="page-header">
+            <i class="fa fa-chart-line"></i> Analytics Dashboard
+            <button class="btn btn-primary pull-right" onclick="ModernDashboard.loadDashboardData()">
+                <i class="fa fa-sync"></i> Refresh
+            </button>
+        </h1>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div id="analytics-loading" class="text-center" style="padding: 50px;">
+    <i class="fa fa-spinner fa-spin fa-3x"></i>
+    <p>Loading analytics...</p>
+</div>
+
+<!-- Dashboard Content -->
+<div id="analytics-content" style="display: none;">
+    
+    <!-- Overview Cards Row -->
+    <div class="row">
+        <!-- Total Campaigns -->
+        <div class="col-md-3">
+            <div class="card card-analytics" id="card-total-campaigns">
+                <div class="card-icon bg-primary">
+                    <i class="fa fa-bullhorn"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-value">0</div>
+                    <div class="card-label">Total Campaigns</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Campaigns -->
+        <div class="col-md-3">
+            <div class="card card-analytics" id="card-active-campaigns">
+                <div class="card-icon bg-success">
+                    <i class="fa fa-play"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-value">0</div>
+                    <div class="card-label">Active</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Emails Sent -->
+        <div class="col-md-3">
+            <div class="card card-analytics" id="card-emails-sent">
+                <div class="card-icon bg-info">
+                    <i class="fa fa-envelope"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-value">0</div>
+                    <div class="card-label">Emails Sent</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Clicks -->
+        <div class="col-md-3">
+            <div class="card card-analytics" id="card-total-clicks">
+                <div class="card-icon bg-warning">
+                    <i class="fa fa-mouse-pointer"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-value">0</div>
+                    <div class="card-label">Total Clicks</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rate Cards Row -->
+    <div class="row">
+        <!-- Click Rate -->
+        <div class="col-md-4">
+            <div class="card card-rate" id="card-click-rate">
+                <div class="card-content text-center">
+                    <div class="rate-value">
+                        <span class="card-value">0%</span>
+                        <span class="rate-badge badge badge-success">GOOD</span>
+                    </div>
+                    <div class="card-label">Click Rate</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Open Rate -->
+        <div class="col-md-4">
+            <div class="card card-rate" id="card-open-rate">
+                <div class="card-content text-center">
+                    <div class="rate-value">
+                        <span class="card-value">0%</span>
+                        <span class="rate-badge badge badge-success">GOOD</span>
+                    </div>
+                    <div class="card-label">Open Rate</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Report Rate -->
+        <div class="col-md-4">
+            <div class="card card-rate" id="card-report-rate">
+                <div class="card-content text-center">
+                    <div class="rate-value">
+                        <span class="card-value">0%</span>
+                        <span class="rate-badge badge badge-success">GOOD</span>
+                    </div>
+                    <div class="card-label">Report Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Risk Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-shield-alt"></i> Risk Distribution
+                </div>
+                <div class="card-content">
+                    <canvas id="risk-distribution-chart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Department Performance -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-building"></i> Department Performance
+                </div>
+                <div class="card-content">
+                    <canvas id="department-chart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top At-Risk Users -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-exclamation-triangle"></i> Top At-Risk Users
+                </div>
+                <div class="card-content">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Email</th>
+                                <th>Score</th>
+                                <th>Risk Progress</th>
+                                <th>Risk Level</th>
+                            </tr>
+                        </thead>
+                        <tbody id="at-risk-users-body">
+                            <tr>
+                                <td colspan="5" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-rocket"></i> Quick Analytics
+                </div>
+                <div class="card-content">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <a href="/campaigns" class="btn btn-lg btn-outline-primary">
+                                <i class="fa fa-bullhorn"></i> View Campaigns
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-lg btn-outline-success" onclick="alert('Coming soon: Export to PDF')">
+                                <i class="fa fa-file-pdf"></i> Export Report
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-lg btn-outline-warning" onclick="alert('Coming soon: Scheduled Reports')">
+                                <i class="fa fa-clock"></i> Schedule Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ template "footer" . }}
+{{ end }}

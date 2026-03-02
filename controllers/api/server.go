@@ -86,6 +86,17 @@ func (as *Server) registerRoutes() {
 	router.HandleFunc("/webhooks/", mid.Use(as.Webhooks, mid.RequirePermission(models.PermissionModifySystem)))
 	router.HandleFunc("/webhooks/{id:[0-9]+}/validate", mid.Use(as.ValidateWebhook, mid.RequirePermission(models.PermissionModifySystem)))
 	router.HandleFunc("/webhooks/{id:[0-9]+}", mid.Use(as.Webhook, mid.RequirePermission(models.PermissionModifySystem)))
+	
+	// Analytics routes
+	router.HandleFunc("/analytics/dashboard", as.DashboardSummary)
+	router.HandleFunc("/analytics/campaign/{id:[0-9]+}", as.CampaignAnalytics)
+	router.HandleFunc("/analytics/campaign/{id:[0-9]+}/time", as.TimeAnalytics)
+	router.HandleFunc("/analytics/users/scores", as.UserScores)
+	router.HandleFunc("/analytics/users/{email}/score", as.UserScore)
+	router.HandleFunc("/analytics/users/at-risk", as.TopAtRiskUsers)
+	router.HandleFunc("/analytics/departments", as.DepartmentMetrics)
+	router.HandleFunc("/analytics/risk/distribution", as.RiskDistribution)
+	
 	as.handler = router
 }
 

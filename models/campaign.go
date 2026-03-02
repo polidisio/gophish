@@ -176,6 +176,13 @@ func AddEvent(e *Event, campaignID int64) error {
 	return db.Save(e).Error
 }
 
+// GetEvents returns all events for a specific campaign
+func GetEvents(campaignID int64) ([]Event, error) {
+	var events []Event
+	err := db.Where("campaign_id=?", campaignID).Order("time DESC").Find(&events).Error
+	return events, err
+}
+
 // getDetails retrieves the related attributes of the campaign
 // from the database. If the Events and the Results are not available,
 // an error is returned. Otherwise, the attribute name is set to [Deleted],

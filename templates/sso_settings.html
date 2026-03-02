@@ -1,0 +1,169 @@
+{{ define "sso_settings" }}
+{{ template "header" . }}
+
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="page-header">
+            <i class="fa fa-sign-in-alt"></i> SSO Configuration
+            <small>Microsoft Azure AD</small>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-microsoft"></i> Azure AD Integration
+                </h3>
+            </div>
+            <div class="panel-body">
+                <form role="form" id="sso-form" method="POST" action="/settings/sso">
+                    {{ csrfField }}
+                    
+                    <div class="form-group">
+                        <label for="provider_name">Display Name</label>
+                        <input type="text" class="form-control" id="provider_name" name="name" 
+                               placeholder="Company SSO" value="{{ .Provider.Name }}">
+                        <p class="help-block">Friendly name shown on login page</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="client_id">Application (client) ID</label>
+                        <input type="text" class="form-control" id="client_id" name="client_id" 
+                               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                               value="{{ .Provider.ClientID }}">
+                        <p class="help-block">Found in Azure Portal > App Registrations</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="client_secret">Client Secret</label>
+                        <input type="password" class="form-control" id="client_secret" name="client_secret" 
+                               placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                               value="{{ .Provider.ClientSecret }}">
+                        <p class="help-block">Generate in Azure Portal > Certificates & secrets</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tenant_id">Directory (tenant) ID</label>
+                        <input type="text" class="form-control" id="tenant_id" name="tenant_id" 
+                               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                               value="{{ .Provider.TenantID }}">
+                        <p class="help-block">Found in Azure Portal > Properties</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="redirect_url">Redirect URL</label>
+                        <input type="text" class="form-control" id="redirect_url" name="redirect_url" 
+                               placeholder="https://your-gophish.com/oauth/callback"
+                               value="{{ .Provider.RedirectURL }}" readonly>
+                        <p class="help-block">Add this to your Azure App's Redirect URIs</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scopes">Scopes</label>
+                        <input type="text" class="form-control" id="scopes" name="scopes" 
+                               value="openid,profile,email,User.Read,Directory.Read.All">
+                        <p class="help-block">Comma-separated Azure AD permissions</p>
+                    </div>
+                    
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="enabled" {{ if .Provider.Enabled }}checked{{ end }}>
+                            <strong>Enable SSO Login</strong>
+                        </label>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h4><i class="fa fa-sync"></i> User Sync</h4>
+                    
+                    <div class="form-group">
+                        <button type="button" class="btn btn-primary" onclick="syncUsers()">
+                            <i class="fa fa-sync"></i> Sync Users from Azure AD
+                        </button>
+                        <span id="sync-status"></span>
+                    </div>
+                    
+                    <div id="sync-results" style="display: none;">
+                        <div class="alert alert-info">
+                            <strong>Last Sync:</strong> <span id="last-sync-time"></span><br>
+                            <strong>Total Users:</strong> <span id="total-users"></span><br>
+                            <strong>New Users:</strong> <span id="new-users"></span>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-save"></i> Save Configuration
+                        </button>
+                        <button type="button" class="btn btn-default" onclick="testConnection()">
+                            <i class="fa fa-plug"></i> Test Connection
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-info-circle"></i> Setup Instructions
+                </h3>
+            </div>
+            <div class="panel-body">
+                <ol>
+                    <li>Go to <a href="https://portal.azure.com/#view/Microsoft_AAD_IAM/RegisteredApps" target="_blank">Azure Portal - App Registrations</a></li>
+                    <li>Create a new registration or select existing</li>
+                    <li>Copy the <strong>Application (client) ID</strong> and <strong>Directory (tenant) ID</strong></li>
+                    <li>Go to <strong>Certificates & secrets</strong> and create a new client secret</li>
+                    <li>Go to <strong>Authentication</strong> and add Redirect URI:
+                        <code id="setup-redirect">{{ .Provider.RedirectURL }}</code></li>
+                    <li>Go to <strong>API permissions</strong> and add:
+                        <ul>
+                            <li>User.Read (Delegated)</li>
+                            <li>Directory.Read.All (Application)</li>
+                        </ul>
+                    </li>
+                    <li>Click "Grant admin consent" for the permissions</li>
+                    <li>Enter the values above and click Save</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function syncUsers() {
+    $('#sync-status').html('<i class="fa fa-spinner fa-spin"></i> Syncing...');
+    $('#sync-results').hide();
+    
+    $.post('/api/sso/sync', function(data) {
+        $('#sync-status').html('<i class="fa fa-check text-success"></i> Sync complete!');
+        $('#last-sync-time').text(data.last_sync);
+        $('#total-users').text(data.total_users);
+        $('#new-users').text(data.new_users);
+        $('#sync-results').show();
+    }).fail(function() {
+        $('#sync-status').html('<i class="fa fa-times text-danger"></i> Sync failed');
+    });
+}
+
+function testConnection() {
+    $.get('/api/sso/test', function(data) {
+        alert('Connection successful! User: ' + data.user);
+    }).fail(function() {
+        alert('Connection failed. Check your configuration.');
+    });
+}
+</script>
+
+{{ template "footer" . }}
+{{ end }}

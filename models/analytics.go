@@ -134,6 +134,8 @@ type CampaignAnalytics struct {
 	// Time metrics
 	MedianTimeToClick    float64 `json:"median_time_to_click"`   // minutes
 	MedianTimeToOpen     float64 `json:"median_time_to_open"`    // minutes
+	AvgTimeToClick       float64 `json:"avg_time_to_click"`     // minutes
+	AvgTimeToOpen        float64 `json:"avg_time_to_open"`      // minutes
 	
 	// User risk distribution at campaign end
 	LowRiskCount         int     `json:"low_risk_count"`

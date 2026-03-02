@@ -5,21 +5,10 @@ import (
 	"strconv"
 
 	ctx "github.com/gophish/gophish/context"
-	log "github.com/gophish/gophish/models"
+	log "github.com/gophish/gophish/logger"
+	"github.com/gophish/gophish/models"
 	"github.com/gorilla/mux"
 )
-
-// AnalyticsMiddleware wraps the analytics service
-type AnalyticsMiddleware struct {
-	Service *models.AnalyticsService
-}
-
-// NewAnalyticsMiddleware creates a new analytics middleware
-func NewAnalyticsMiddleware() *AnalyticsMiddleware {
-	return &AnalyticsMiddleware{
-		Service: models.NewAnalyticsService(),
-	}
-}
 
 // DashboardSummary returns the overall dashboard summary
 // GET /api/analytics/dashboard
@@ -39,11 +28,11 @@ func (as *Server) DashboardSummary(w http.ResponseWriter, r *http.Request) {
 		// Get all results for these campaigns
 		var allResults []models.Result
 		for _, c := range campaigns {
-			results, err := models.GetResults(c.Id)
+			cr, err := models.GetCampaignResults(c.Id, userID)
 			if err != nil {
 				continue
 			}
-			allResults = append(allResults, results...)
+			allResults = append(allResults, cr.Results...)
 		}
 		
 		// Get all events
@@ -76,15 +65,17 @@ func (as *Server) CampaignAnalytics(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		
+		userID := ctx.Get(r, "user_id").(int64)
+		
 		// Get campaign
-		campaign, err := models.GetCampaign(campaignID)
+		campaign, err := models.GetCampaign(campaignID, userID)
 		if err != nil {
 			JSONResponse(w, models.Response{Success: false, Message: "Campaign not found"}, http.StatusNotFound)
 			return
 		}
 		
 		// Get results and events
-		results, err := models.GetResults(campaignID)
+		cr, err := models.GetCampaignResults(campaignID, userID)
 		if err != nil {
 			log.Error(err)
 			JSONResponse(w, models.Response{Success: false, Message: err.Error()}, http.StatusInternalServerError)
@@ -100,7 +91,7 @@ func (as *Server) CampaignAnalytics(w http.ResponseWriter, r *http.Request) {
 		
 		// Calculate analytics
 		analyticsService := models.NewAnalyticsService()
-		analytics := analyticsService.CalculateCampaignAnalytics(campaign, results, events)
+		analytics := analyticsService.CalculateCampaignAnalytics(campaign, cr.Results, events)
 		
 		JSONResponse(w, analytics, http.StatusOK)
 	}
@@ -124,11 +115,11 @@ func (as *Server) UserScores(w http.ResponseWriter, r *http.Request) {
 		// Get all results
 		var allResults []models.Result
 		for _, c := range campaigns {
-			results, err := models.GetResults(c.Id)
+			cr, err := models.GetCampaignResults(c.Id, userID)
 			if err != nil {
 				continue
 			}
-			allResults = append(allResults, results...)
+			allResults = append(allResults, cr.Results...)
 		}
 		
 		// Calculate scores
@@ -165,11 +156,11 @@ func (as *Server) UserScore(w http.ResponseWriter, r *http.Request) {
 		// Get results for this email
 		var userResults []models.Result
 		for _, c := range campaigns {
-			results, err := models.GetResults(c.Id)
+			cr, err := models.GetCampaignResults(c.Id, userID)
 			if err != nil {
 				continue
 			}
-			for _, r := range results {
+			for _, r := range cr.Results {
 				if r.Email == email {
 					userResults = append(userResults, r)
 				}
@@ -215,11 +206,11 @@ func (as *Server) DepartmentMetrics(w http.ResponseWriter, r *http.Request) {
 		// Get all results
 		var allResults []models.Result
 		for _, c := range campaigns {
-			results, err := models.GetResults(c.Id)
+			cr, err := models.GetCampaignResults(c.Id, userID)
 			if err != nil {
 				continue
 			}
-			allResults = append(allResults, results...)
+			allResults = append(allResults, cr.Results...)
 		}
 		
 		// Calculate department metrics
@@ -242,8 +233,10 @@ func (as *Server) TimeAnalytics(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		
+		userID := ctx.Get(r, "user_id").(int64)
+		
 		// Get results and events
-		results, err := models.GetResults(campaignID)
+		cr, err := models.GetCampaignResults(campaignID, userID)
 		if err != nil {
 			log.Error(err)
 			JSONResponse(w, models.Response{Success: false, Message: err.Error()}, http.StatusInternalServerError)
@@ -257,7 +250,7 @@ func (as *Server) TimeAnalytics(w http.ResponseWriter, r *http.Request) {
 		
 		// Calculate time analytics
 		analyticsService := models.NewAnalyticsService()
-		timeAnalytics := analyticsService.CalculateTimeAnalytics(events, results)
+		timeAnalytics := analyticsService.CalculateTimeAnalytics(events, cr.Results)
 		
 		JSONResponse(w, timeAnalytics, http.StatusOK)
 	}
@@ -281,11 +274,11 @@ func (as *Server) RiskDistribution(w http.ResponseWriter, r *http.Request) {
 		// Get all results
 		var allResults []models.Result
 		for _, c := range campaigns {
-			results, err := models.GetResults(c.Id)
+			cr, err := models.GetCampaignResults(c.Id, userID)
 			if err != nil {
 				continue
 			}
-			allResults = append(allResults, results...)
+			allResults = append(allResults, cr.Results...)
 		}
 		
 		// Calculate scores
@@ -334,11 +327,11 @@ func (as *Server) TopAtRiskUsers(w http.ResponseWriter, r *http.Request) {
 		// Get all results
 		var allResults []models.Result
 		for _, c := range campaigns {
-			results, err := models.GetResults(c.Id)
+			cr, err := models.GetCampaignResults(c.Id, userID)
 			if err != nil {
 				continue
 			}
-			allResults = append(allResults, results...)
+			allResults = append(allResults, cr.Results...)
 		}
 		
 		// Calculate scores

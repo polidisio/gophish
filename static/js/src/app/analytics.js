@@ -4,28 +4,94 @@ var Dashboard = {
     
     init: function() {
         var self = this;
-        console.log("Dashboard init called");
+        console.log("Dashboard init called - making direct API calls");
         
-        // Wait for api to be fully loaded - check multiple times
-        var attempts = 0;
-        var checkApi = function() {
-            attempts++;
-            console.log("Attempt " + attempts + " - api:", typeof api, "api.analytics:", typeof api !== 'undefined' ? typeof api.analytics : 'undefined');
-            
-            if (typeof api !== 'undefined' && api.analytics && typeof api.analytics.summary === 'function') {
-                console.log("API ready! Loading data...");
-                self.fetchData();
-            } else if (attempts < 50) {
-                console.log("Waiting for api... attempt " + attempts);
-                setTimeout(checkApi, 200);
-            } else {
-                console.error("API never loaded after 50 attempts");
-                $("#loading").html("<div class='alert alert-danger'>Error loading analytics. Please refresh the page.</div>");
+        // Use direct fetch instead of waiting for api object
+        var apiKey = typeof user !== 'undefined' ? user.api_key : '';
+        console.log("API Key:", apiKey ? "found" : "NOT FOUND");
+        
+        if (!apiKey) {
+            $("#loading").html("<div class='alert alert-warning'>Please login to view analytics</div>");
+            return;
+        }
+        
+        this.fetchData();
+    },
+    
+    fetchData: function() {
+        var self = this;
+        var apiKey = user.api_key;
+        
+        $("#loading").show();
+        $("#dashboard-content").hide();
+        
+        // Summary
+        $.ajax({
+            url: "/api/analytics/summary",
+            method: "GET",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+            },
+            success: function(response) {
+                console.log("Summary:", response);
+                self.renderSummary(response);
+            },
+            error: function(err) {
+                console.error("Summary error:", err);
             }
-        };
+        });
         
-        // Start checking after a small delay to let other scripts load
-        setTimeout(checkApi, 500);
+        // Departments
+        $.ajax({
+            url: "/api/analytics/departments",
+            method: "GET",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+            },
+            success: function(response) {
+                console.log("Departments:", response);
+                self.renderDepartments(response);
+            },
+            error: function(err) {
+                console.error("Departments error:", err);
+            }
+        });
+        
+        // User Scores
+        $.ajax({
+            url: "/api/analytics/user-scores",
+            method: "GET",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+            },
+            success: function(response) {
+                console.log("User Scores:", response);
+                self.renderUserScores(response);
+            },
+            error: function(err) {
+                console.error("User Scores error:", err);
+            }
+        });
+        
+        // Campaigns
+        $.ajax({
+            url: "/api/analytics/campaigns",
+            method: "GET",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+            },
+            success: function(response) {
+                console.log("Campaigns:", response);
+                self.renderCampaigns(response);
+                $("#loading").hide();
+                $("#dashboard-content").show();
+            },
+            error: function(err) {
+                console.error("Campaigns error:", err);
+                $("#loading").hide();
+                $("#dashboard-content").show();
+            }
+        });
     },
     
     load: function() {

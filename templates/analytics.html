@@ -1,0 +1,146 @@
+{{define "body"}}
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <h1 class="page-header">
+        <i class="fa fa-chart-line"></i> Analytics Dashboard
+        <button class="btn btn-primary pull-right" onclick="Dashboard.load()">
+            <i class="fa fa-sync"></i> Refresh
+        </button>
+    </h1>
+    
+    <div id="loading" class="text-center" style="padding: 50px;">
+        <i class="fa fa-spinner fa-spin fa-3x"></i>
+        <p>Loading analytics...</p>
+    </div>
+    
+    <div id="dashboard-content" style="display:none;">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="fa fa-bullhorn"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-campaigns">0</h3>
+                        <p>Campaigns</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <i class="fa fa-envelope"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-emails">0</h3>
+                        <p>Emails Sent</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning">
+                        <i class="fa fa-mouse-pointer"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-click-rate">0%</h3>
+                        <p>Click Rate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info">
+                        <i class="fa fa-user-shield"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-report-rate">0%</h3>
+                        <p>Report Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-chart-pie"></i> Risk Distribution</h3>
+                    </div>
+                    <div class="panel-body">
+                        <canvas id="riskChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-chart-bar"></i> Campaign Performance</h3>
+                    </div>
+                    <div class="panel-body">
+                        <canvas id="campaignChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-building"></i> Department Metrics</h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-striped" id="departmentTable">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Domain</th>
+                                    <th>Users</th>
+                                    <th>Click Rate</th>
+                                    <th>Open Rate</th>
+                                    <th>Report Rate</th>
+                                    <th>Risk Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="departmentBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-users"></i> User Risk Scores</h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-striped" id="userScoresTable">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Times Clicked</th>
+                                    <th>Times Opened</th>
+                                    <th>Times Reported</th>
+                                    <th>Risk Score</th>
+                                    <th>Risk Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userScoresBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/dist/app/analytics.min.js"></script>
+{{end}}

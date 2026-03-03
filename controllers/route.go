@@ -124,6 +124,8 @@ func (as *AdminServer) registerRoutes() {
 	router := mux.NewRouter()
 	// Base Front-end routes
 	router.HandleFunc("/", mid.Use(as.Base, mid.RequireLogin))
+	router.HandleFunc("/dashboard", mid.Use(as.Base, mid.RequireLogin))
+	router.HandleFunc("/analytics", mid.Use(as.Analytics, mid.RequireLogin))
 	router.HandleFunc("/login", mid.Use(as.Login, as.limiter.Limit))
 	router.HandleFunc("/logout", mid.Use(as.Logout, mid.RequireLogin))
 	router.HandleFunc("/reset_password", mid.Use(as.ResetPassword, mid.RequireLogin))
@@ -201,6 +203,13 @@ func (as *AdminServer) Base(w http.ResponseWriter, r *http.Request) {
 	params := newTemplateParams(r)
 	params.Title = "Dashboard"
 	getTemplate(w, "dashboard").ExecuteTemplate(w, "base", params)
+}
+
+// Analytics handles the analytics dashboard
+func (as *AdminServer) Analytics(w http.ResponseWriter, r *http.Request) {
+	params := newTemplateParams(r)
+	params.Title = "Analytics"
+	getTemplate(w, "analytics").ExecuteTemplate(w, "base", params)
 }
 
 // Campaigns handles the default path and template execution

@@ -10,21 +10,25 @@ var Dashboard = {
         $("#loading").show();
         $("#dashboard-content").hide();
         
-        api.get("/api/analytics/summary", function(response) {
+        api.analytics.summary().then(function(response) {
             Dashboard.renderSummary(response);
+            $("#loading").hide();
+            $("#dashboard-content").show();
+        }).catch(function(err) {
+            console.error("Error loading summary:", err);
             $("#loading").hide();
             $("#dashboard-content").show();
         });
         
-        api.get("/api/analytics/departments", function(response) {
+        api.analytics.departments().then(function(response) {
             Dashboard.renderDepartments(response);
         });
         
-        api.get("/api/analytics/user-scores", function(response) {
+        api.analytics.userScores().then(function(response) {
             Dashboard.renderUserScores(response);
         });
         
-        api.get("/api/analytics/campaigns", function(response) {
+        api.analytics.campaigns().then(function(response) {
             Dashboard.renderCampaigns(response);
         });
     },

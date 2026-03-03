@@ -291,6 +291,20 @@ var api = {
     },
     reset: function () {
         return query("/reset", "POST", {}, true)
+    },
+    analytics: {
+        summary: function() {
+            return query("/analytics/summary", "GET", {}, false)
+        },
+        departments: function() {
+            return query("/analytics/departments", "GET", {}, false)
+        },
+        userScores: function() {
+            return query("/analytics/user-scores", "GET", {}, false)
+        },
+        campaigns: function() {
+            return query("/analytics/campaigns", "GET", {}, false)
+        }
     }
 }
 window.api = api

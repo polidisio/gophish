@@ -3,7 +3,17 @@ var Dashboard = {
     campaignChart: null,
     
     init: function() {
-        this.load();
+        var self = this;
+        // Wait for api to be defined
+        function waitForApi() {
+            if (typeof api !== 'undefined' && api.analytics) {
+                self.load();
+            } else {
+                console.log("Waiting for api...");
+                setTimeout(waitForApi, 100);
+            }
+        }
+        waitForApi();
     },
     
     load: function() {

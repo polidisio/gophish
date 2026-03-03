@@ -222,28 +222,27 @@ func GetTimeAnalytics(campaignId int64) (*TimeAnalytics, error) {
 }
 
 func GetDashboardSummary(userId int64) (*DashboardSummary, error) {
-	var campaigns []Campaign
-	err := db.Where("user_id = ?", userId).Order("created_date DESC").Limit(10).Find(&campaigns).Error
+	var analytics []CampaignAnalytics
+	err := db.Order("campaign_id DESC").Find(&analytics).Error
 	if err != nil {
 		return nil, err
 	}
 
-	var totalSent, totalOpened, totalClicked, totalReported int64
-	for _, c := range campaigns {
-		stats := CalculateCampaignStats(c)
-		totalSent += stats.EmailsSent
-		totalOpened += stats.OpenedEmail
-		totalClicked += stats.ClickedLink
-		totalReported += stats.EmailReported
+	var totalSent, totalOpened, totalClicked, totalReported int
+	for _, a := range analytics {
+		totalSent += a.EmailsSent
+		totalOpened += a.EmailsOpened
+		totalClicked += a.LinksClicked
+		totalReported += a.EmailsReported
 	}
 
 	var totalUsers int64
-	db.Model(&Result{}).Count(&totalUsers)
+	db.Model(&UserPhishingScore{}).Count(&totalUsers)
 
 	summary := &DashboardSummary{
-		TotalCampaigns:     int64(len(campaigns)),
+		TotalCampaigns:     int64(len(analytics)),
 		TotalUsers:         totalUsers,
-		TotalEmailsSent:    totalSent,
+		TotalEmailsSent:    int64(totalSent),
 		OverallClickRate:   0,
 		OverallOpenRate:    0,
 		OverallReportRate:  0,

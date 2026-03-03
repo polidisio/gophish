@@ -7,10 +7,13 @@ var Dashboard = {
     },
     
     load: function() {
+        console.log("Loading analytics...");
+        console.log("User API key:", user ? user.api_key : "NOT SET");
         $("#loading").show();
         $("#dashboard-content").hide();
         
         api.analytics.summary().then(function(response) {
+            console.log("Summary response:", response);
             Dashboard.renderSummary(response);
             $("#loading").hide();
             $("#dashboard-content").show();
@@ -18,18 +21,28 @@ var Dashboard = {
             console.error("Error loading summary:", err);
             $("#loading").hide();
             $("#dashboard-content").show();
+            $("#dashboard-content").html("<div class='alert alert-warning'>Please login to view analytics</div>");
         });
         
         api.analytics.departments().then(function(response) {
+            console.log("Departments response:", response);
             Dashboard.renderDepartments(response);
+        }).catch(function(err) {
+            console.error("Error loading departments:", err);
         });
         
         api.analytics.userScores().then(function(response) {
+            console.log("User scores response:", response);
             Dashboard.renderUserScores(response);
+        }).catch(function(err) {
+            console.error("Error loading user scores:", err);
         });
         
         api.analytics.campaigns().then(function(response) {
+            console.log("Campaigns response:", response);
             Dashboard.renderCampaigns(response);
+        }).catch(function(err) {
+            console.error("Error loading campaigns:", err);
         });
     },
     

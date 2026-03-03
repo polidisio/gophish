@@ -127,6 +127,8 @@ func (as *AdminServer) registerRoutes() {
 	router.HandleFunc("/dashboard", mid.Use(as.Base, mid.RequireLogin))
 	router.HandleFunc("/analytics", mid.Use(as.Analytics, mid.RequireLogin))
 	router.HandleFunc("/login", mid.Use(as.Login, as.limiter.Limit))
+	router.HandleFunc("/login/entra", as.EntraLogin)
+	router.HandleFunc("/login/entra/callback", as.EntraCallback)
 	router.HandleFunc("/logout", mid.Use(as.Logout, mid.RequireLogin))
 	router.HandleFunc("/reset_password", mid.Use(as.ResetPassword, mid.RequireLogin))
 	router.HandleFunc("/campaigns", mid.Use(as.Campaigns, mid.RequireLogin))
@@ -420,6 +422,166 @@ func (as *AdminServer) Logout(w http.ResponseWriter, r *http.Request) {
 	Flash(w, r, "success", "You have successfully logged out")
 	session.Save(r, w)
 	http.Redirect(w, r, "/login", http.StatusFound)
+}
+
+func (as *AdminServer) EntraLogin(w http.ResponseWriter, r *http.Request) {
+	settings, err := models.GetEntraIDSettings()
+	if err != nil {
+		log.Error(err)
+		http.Redirect(w, r, "/login?error=configuration_error", http.StatusFound)
+		return
+	}
+
+	if !settings.Enabled {
+		http.Redirect(w, r, "/login?error=entra_not_enabled", http.StatusFound)
+		return
+	}
+
+	state, err := auth.GenerateState()
+	if err != nil {
+		log.Error(err)
+		http.Redirect(w, r, "/login?error=state_generation_failed", http.StatusFound)
+		return
+	}
+
+	auth.StoreOAuthState(state, &auth.OAuthState{
+		State:     state,
+		ExpiresAt: time.Now().Add(10 * time.Minute),
+	})
+
+	config := &auth.EntraIDConfig{
+		ClientID:     settings.ClientID,
+		ClientSecret: settings.ClientSecret,
+		TenantID:    settings.TenantID,
+		RedirectURI:  settings.RedirectURI,
+		Scopes:      settings.Scopes,
+	}
+	provider := auth.NewEntraIDProvider(config)
+	authURL := provider.GetAuthorizationURL(state)
+	http.Redirect(w, r, authURL, http.StatusFound)
+}
+
+func (as *AdminServer) EntraCallback(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	state := r.URL.Query().Get("state")
+	errorMsg := r.URL.Query().Get("error")
+
+	if errorMsg != "" {
+		log.Error("Entra ID error: ", errorMsg)
+		http.Redirect(w, r, "/login?error="+errorMsg, http.StatusFound)
+		return
+	}
+
+	if code == "" || state == "" {
+		http.Redirect(w, r, "/login?error=missing_params", http.StatusFound)
+		return
+	}
+
+	oauthState := auth.GetOAuthState(state)
+	if oauthState == nil {
+		http.Redirect(w, r, "/login?error=invalid_state", http.StatusFound)
+		return
+	}
+	auth.DeleteOAuthState(state)
+
+	settings, err := models.GetEntraIDSettings()
+	if err != nil {
+		log.Error(err)
+		http.Redirect(w, r, "/login?error=configuration_error", http.StatusFound)
+		return
+	}
+
+	config := &auth.EntraIDConfig{
+		ClientID:     settings.ClientID,
+		ClientSecret: settings.ClientSecret,
+		TenantID:    settings.TenantID,
+		RedirectURI:  settings.RedirectURI,
+		Scopes:      settings.Scopes,
+	}
+	provider := auth.NewEntraIDProvider(config)
+	token, err := provider.ExchangeCode(r.Context(), code)
+	if err != nil {
+		log.Error("Failed to exchange code: ", err)
+		http.Redirect(w, r, "/login?error=token_exchange_failed", http.StatusFound)
+		return
+	}
+
+	microsoftUser, err := provider.GetUserInfo(r.Context(), token.AccessToken)
+	if err != nil {
+		log.Error("Failed to get user info: ", err)
+		http.Redirect(w, r, "/login?error=user_info_failed", http.StatusFound)
+		return
+	}
+
+	email := microsoftUser.Mail
+	if email == "" {
+		email = microsoftUser.UserPrincipalName
+	}
+
+	var user models.User
+	user, err = models.GetUserByEntraID(microsoftUser.ID)
+	if err != nil {
+		if err.Error() != "record not found" {
+			log.Error(err)
+			http.Redirect(w, r, "/login?error=user_lookup_failed", http.StatusFound)
+			return
+		}
+
+		user, err = models.GetUserByEmail(email)
+		if err != nil {
+			if err.Error() != "record not found" {
+				log.Error(err)
+				http.Redirect(w, r, "/login?error=user_lookup_failed", http.StatusFound)
+				return
+			}
+		}
+	}
+
+	if user.Id == 0 {
+		if !settings.AutoCreateUsers {
+			http.Redirect(w, r, "/login?error=user_not_found", http.StatusFound)
+			return
+		}
+
+		role, err := models.GetRoleBySlug(models.RoleUser)
+		if err != nil {
+			log.Error(err)
+			http.Redirect(w, r, "/login?error=role_not_found", http.StatusFound)
+			return
+		}
+
+		apiKey := auth.GenerateSecureKey(auth.APIKeyLength)
+
+		user = models.User{
+			Username:    email,
+			ApiKey:      apiKey,
+			Role:        role,
+			RoleID:      role.ID,
+			EntraID:     microsoftUser.ID,
+			Department:  microsoftUser.Department,
+		}
+		err = models.PostUser(&user)
+		if err != nil {
+			log.Error(err)
+			http.Redirect(w, r, "/login?error=user_creation_failed", http.StatusFound)
+			return
+		}
+	} else {
+		user.EntraID = microsoftUser.ID
+		if settings.SyncDepartments && microsoftUser.Department != "" {
+			user.Department = microsoftUser.Department
+		}
+		err = models.PutUser(&user)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+
+	session := ctx.Get(r, "session").(*sessions.Session)
+	session.Values["id"] = user.Id
+	session.Save(r, w)
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 // ResetPassword handles the password reset flow when a password change is

@@ -23,6 +23,8 @@ type User struct {
 	PasswordChangeRequired bool      `json:"password_change_required"`
 	AccountLocked          bool      `json:"account_locked"`
 	LastLogin              time.Time `json:"last_login"`
+	EntraID                string    `json:"entra_id"`
+	Department             string    `json:"department"`
 }
 
 // GetUser returns the user that the given id corresponds to. If no user is found, an
@@ -48,6 +50,21 @@ func GetUserByAPIKey(key string) (User, error) {
 	return u, err
 }
 
+// GetUserByEntraID returns the user linked to the given Entra ID. If no user is found, an
+// error is thrown.
+func GetUserByEntraID(entraID string) (User, error) {
+	u := User{}
+	err := db.Preload("Role").Where("entra_id = ?", entraID).First(&u).Error
+	return u, err
+}
+
+// GetUserByEmail returns the user with the given email address (username).
+func GetUserByEmail(email string) (User, error) {
+	u := User{}
+	err := db.Preload("Role").Where("username = ?", email).First(&u).Error
+	return u, err
+}
+
 // GetUserByUsername returns the user that the given username corresponds to. If no user is found, an
 // error is thrown.
 func GetUserByUsername(username string) (User, error) {
@@ -59,6 +76,12 @@ func GetUserByUsername(username string) (User, error) {
 // PutUser updates the given user
 func PutUser(u *User) error {
 	err := db.Save(u).Error
+	return err
+}
+
+// PostUser creates a new user
+func PostUser(u *User) error {
+	err := db.Create(u).Error
 	return err
 }
 

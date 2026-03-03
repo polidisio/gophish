@@ -13,6 +13,8 @@
                 Settings</a></li>
         <li role="reportingSettings"><a href="#reportingSettings" aria-controls="reportingSettings" role="tab" id="reporttab"
             data-toggle="tab">Reporting Settings</a></li>
+        <li role="entraSettings"><a href="#entraSettings" aria-controls="entraSettings" role="tab"
+            data-toggle="tab">Microsoft Entra ID SSO</a></li>
     </ul>
     <!-- Tab Panes -->
     <div class="tab-content">
@@ -241,6 +243,106 @@
         </form>
         </div>
         <!-- Reporting Settings End -->
+        <!-- Entra ID Settings Begin -->
+        <div role="tabpanel" class="tab-pane" id="entraSettings">
+            <form id="entraForm">
+            <br />
+            <div class="row">
+                <div class="col-md-6">
+                    Configure Microsoft Entra ID (Azure AD) Single Sign-On for Gophish.
+                </div>
+             </div>
+            <br />
+
+            <div class="row">
+                <div class="col-md-6">
+                <div class="checkbox checkbox-primary">
+                    <input id="entra_enabled" type="checkbox">
+                    <label for="entra_enabled">Enable Microsoft Entra ID SSO</label>
+                </div>
+                </div>
+             </div>
+            <br />
+
+            <div class="row">
+                <label for="entra_client_id" class="col-sm-2 control-label form-label">Client ID:</label>
+                <div class="col-md-6">
+                    <input type="text" id="entra_client_id" name="entra_client_id" placeholder="Enter Azure App Client ID"
+                        class="form-control" />
+                </div>
+            </div>
+            <br />
+
+            <div class="row">
+                <label for="entra_client_secret" class="col-sm-2 control-label form-label">Client Secret:</label>
+                <div class="col-md-6">
+                    <input type="password" id="entra_client_secret" name="entra_client_secret" placeholder="Enter Azure App Client Secret"
+                        class="form-control" />
+                </div>
+            </div>
+            <br />
+
+            <div class="row">
+                <label for="entra_tenant_id" class="col-sm-2 control-label form-label">Tenant ID:</label>
+                <div class="col-md-6">
+                    <input type="text" id="entra_tenant_id" name="entra_tenant_id" placeholder="Enter Azure Tenant ID"
+                        class="form-control" />
+                </div>
+            </div>
+            <br />
+
+            <div class="row">
+                <label for="entra_redirect_uri" class="col-sm-2 control-label form-label">Redirect URI:</label>
+                <div class="col-md-6">
+                    <input type="text" id="entra_redirect_uri" name="entra_redirect_uri" placeholder="https://your-gophish.com/login/entra/callback"
+                        class="form-control" />
+                </div>
+            </div>
+            <br />
+
+            <div class="row">
+                <label for="entra_scopes" class="col-sm-2 control-label form-label">Scopes:</label>
+                <div class="col-md-6">
+                    <input type="text" id="entra_scopes" name="entra_scopes" placeholder="openid profile email User.Read"
+                        class="form-control" />
+                </div>
+            </div>
+            <br />
+
+            <div class="row">
+                <div class="col-md-6">
+                <div class="checkbox checkbox-primary">
+                    <input id="entra_admin_only" type="checkbox">
+                    <label for="entra_admin_only">Allow SSO login for existing users only (no auto-creation)</label>
+                </div>
+                </div>
+             </div>
+            <br />
+
+            <div class="row">
+                <div class="col-md-6">
+                <div class="checkbox checkbox-primary">
+                    <input id="entra_auto_create" type="checkbox">
+                    <label for="entra_auto_create">Auto-create users from Microsoft directory</label>
+                </div>
+                </div>
+             </div>
+            <br />
+
+            <div class="row">
+                <div class="col-md-6">
+                <div class="checkbox checkbox-primary">
+                    <input id="entra_sync_departments" type="checkbox">
+                    <label for="entra_sync_departments">Sync department from Microsoft</label>
+                </div>
+                </div>
+             </div>
+            <br />
+
+            <button class="btn btn-primary" id="saveentra" type="button"><i class="fa fa-save"></i> Save</button>
+            </form>
+        </div>
+        <!-- Entra ID Settings End -->
     </div>
 </div>
 {{end}} {{define "scripts"}}

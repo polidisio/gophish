@@ -87,6 +87,7 @@ func (as *Server) registerRoutes() {
 	router.HandleFunc("/webhooks/{id:[0-9]+}/validate", mid.Use(as.ValidateWebhook, mid.RequirePermission(models.PermissionModifySystem)))
 	router.HandleFunc("/webhooks/{id:[0-9]+}", mid.Use(as.Webhook, mid.RequirePermission(models.PermissionModifySystem)))
 	as.registerAnalyticsRoutes(router)
+	as.registerSettingsRoutes(router)
 	as.handler = router
 }
 

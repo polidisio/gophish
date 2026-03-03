@@ -235,4 +235,80 @@ $(document).ready(function () {
     })
 
     loadIMAPSettings()
+    loadEntraIDSettings()
+
+    $("#saveentra").click(function() {
+        var entraSettings = {}
+        entraSettings.enabled = $('#entra_enabled').prop('checked')
+        entraSettings.client_id = $("#entra_client_id").val()
+        entraSettings.client_secret = $("#entra_client_secret").val()
+        entraSettings.tenant_id = $("#entra_tenant_id").val()
+        entraSettings.redirect_uri = $("#entra_redirect_uri").val()
+        entraSettings.scopes = $("#entra_scopes").val()
+        entraSettings.admin_only = $('#entra_admin_only').prop('checked')
+        entraSettings.auto_create_users = $('#entra_auto_create').prop('checked')
+        entraSettings.sync_departments = $('#entra_sync_departments').prop('checked')
+
+        if (entraSettings.enabled) {
+            if (entraSettings.client_id == "") {
+                errorFlash("Client ID is required")
+                return false
+            }
+            if (entraSettings.client_secret == "") {
+                errorFlash("Client Secret is required")
+                return false
+            }
+            if (entraSettings.tenant_id == "") {
+                errorFlash("Tenant ID is required")
+                return false
+            }
+            if (entraSettings.redirect_uri == "") {
+                errorFlash("Redirect URI is required")
+                return false
+            }
+        }
+
+        $.ajax({
+            url: "/api/settings/entra",
+            method: "POST",
+            data: JSON.stringify(entraSettings),
+            contentType: "application/json",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + user.api_key);
+            },
+            success: function(response) {
+                successFlashFade("Successfully updated Entra ID settings.", 2)
+                $("#entra_client_secret").val("")
+            },
+            error: function(xhr, status, error) {
+                errorFlash("Error saving Entra ID settings: " + (xhr.responseJSON ? xhr.responseJSON.message : error))
+            }
+        })
+
+        return false
+    })
+
+    function loadEntraIDSettings() {
+        $.ajax({
+            url: "/api/settings/entra",
+            method: "GET",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + user.api_key);
+            },
+            success: function(settings) {
+                $('#entra_enabled').prop('checked', settings.enabled)
+                $("#entra_client_id").val(settings.client_id || "")
+                $("#entra_client_secret").val("")
+                $("#entra_tenant_id").val(settings.tenant_id || "")
+                $("#entra_redirect_uri").val(settings.redirect_uri || "")
+                $("#entra_scopes").val(settings.scopes || "openid profile email User.Read")
+                $('#entra_admin_only').prop('checked', settings.admin_only)
+                $('#entra_auto_create').prop('checked', settings.auto_create_users)
+                $('#entra_sync_departments').prop('checked', settings.sync_departments)
+            },
+            error: function(xhr, status, error) {
+                console.error("Error loading Entra ID settings:", error)
+            }
+        })
+    }
 })

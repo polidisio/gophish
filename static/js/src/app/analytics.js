@@ -4,16 +4,28 @@ var Dashboard = {
     
     init: function() {
         var self = this;
-        // Wait for api to be defined
-        function waitForApi() {
-            if (typeof api !== 'undefined' && api.analytics) {
-                self.load();
+        console.log("Dashboard init called");
+        
+        // Wait for api to be fully loaded - check multiple times
+        var attempts = 0;
+        var checkApi = function() {
+            attempts++;
+            console.log("Attempt " + attempts + " - api:", typeof api, "api.analytics:", typeof api !== 'undefined' ? typeof api.analytics : 'undefined');
+            
+            if (typeof api !== 'undefined' && api.analytics && typeof api.analytics.summary === 'function') {
+                console.log("API ready! Loading data...");
+                self.fetchData();
+            } else if (attempts < 50) {
+                console.log("Waiting for api... attempt " + attempts);
+                setTimeout(checkApi, 200);
             } else {
-                console.log("Waiting for api...");
-                setTimeout(waitForApi, 100);
+                console.error("API never loaded after 50 attempts");
+                $("#loading").html("<div class='alert alert-danger'>Error loading analytics. Please refresh the page.</div>");
             }
-        }
-        waitForApi();
+        };
+        
+        // Start checking after a small delay to let other scripts load
+        setTimeout(checkApi, 500);
     },
     
     load: function() {

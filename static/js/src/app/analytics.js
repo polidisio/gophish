@@ -1,27 +1,36 @@
 var Dashboard = {
     riskChart: null,
     campaignChart: null,
+    apiKey: null,
     
     init: function() {
         var self = this;
-        console.log("Dashboard init called - making direct API calls");
+        console.log("Dashboard init called");
         
-        // Use direct fetch instead of waiting for api object
-        var apiKey = typeof user !== 'undefined' ? user.api_key : '';
-        console.log("API Key:", apiKey ? "found" : "NOT FOUND");
-        
-        if (!apiKey) {
-            $("#loading").html("<div class='alert alert-warning'>Please login to view analytics</div>");
-            return;
+        // Get API key from global user object
+        if (typeof user !== 'undefined' && user && user.api_key) {
+            this.apiKey = user.api_key;
+            console.log("API Key found:", this.apiKey.substring(0, 8) + "...");
+            this.fetchData();
+        } else {
+            console.error("User object or API key not found");
+            console.log("Checking window.user:", typeof window.user);
+            console.log("Checking window.api:", typeof window.api);
+            
+            // Try to get API key from localStorage as fallback
+            var storedKey = localStorage.getItem('gophish_api_key');
+            if (storedKey) {
+                this.apiKey = storedKey;
+                console.log("Using API key from localStorage");
+                this.fetchData();
+            } else {
+                $("#loading").html("<div class='alert alert-warning'>Please login to view analytics. API key not available.</div>");
+            }
         }
-        
-        this.fetchData();
     },
     
     fetchData: function() {
         var self = this;
-        var apiKey = user.api_key;
-        
         $("#loading").show();
         $("#dashboard-content").hide();
         
@@ -30,14 +39,15 @@ var Dashboard = {
             url: "/api/analytics/summary",
             method: "GET",
             beforeSend: function(xhr) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + self.apiKey);
             },
             success: function(response) {
                 console.log("Summary:", response);
                 self.renderSummary(response);
             },
-            error: function(err) {
-                console.error("Summary error:", err);
+            error: function(xhr, status, error) {
+                console.error("Summary error:", status, error);
+                console.error("Response:", xhr.responseText);
             }
         });
         
@@ -46,14 +56,14 @@ var Dashboard = {
             url: "/api/analytics/departments",
             method: "GET",
             beforeSend: function(xhr) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + self.apiKey);
             },
             success: function(response) {
                 console.log("Departments:", response);
                 self.renderDepartments(response);
             },
-            error: function(err) {
-                console.error("Departments error:", err);
+            error: function(xhr, status, error) {
+                console.error("Departments error:", status, error);
             }
         });
         
@@ -62,14 +72,14 @@ var Dashboard = {
             url: "/api/analytics/user-scores",
             method: "GET",
             beforeSend: function(xhr) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + self.apiKey);
             },
             success: function(response) {
                 console.log("User Scores:", response);
                 self.renderUserScores(response);
             },
-            error: function(err) {
-                console.error("User Scores error:", err);
+            error: function(xhr, status, error) {
+                console.error("User Scores error:", status, error);
             }
         });
         
@@ -78,7 +88,7 @@ var Dashboard = {
             url: "/api/analytics/campaigns",
             method: "GET",
             beforeSend: function(xhr) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + self.apiKey);
             },
             success: function(response) {
                 console.log("Campaigns:", response);
@@ -86,62 +96,11 @@ var Dashboard = {
                 $("#loading").hide();
                 $("#dashboard-content").show();
             },
-            error: function(err) {
-                console.error("Campaigns error:", err);
+            error: function(xhr, status, error) {
+                console.error("Campaigns error:", status, error);
                 $("#loading").hide();
                 $("#dashboard-content").show();
             }
-        });
-    },
-    
-    load: function() {
-        var self = this;
-        console.log("Loading analytics data...");
-        
-        function waitForApi() {
-            if (typeof api !== 'undefined' && api.analytics) {
-                self.fetchData();
-            } else {
-                console.log("Waiting for api...");
-                setTimeout(waitForApi, 100);
-            }
-        }
-        waitForApi();
-    },
-    
-    fetchData: function() {
-        var self = this;
-        $("#loading").show();
-        $("#dashboard-content").hide();
-        
-        api.analytics.summary().then(function(response) {
-            console.log("Summary response:", response);
-            self.renderSummary(response);
-            $("#loading").hide();
-            $("#dashboard-content").show();
-        }).catch(function(err) {
-            console.error("Error loading summary:", err);
-        });
-        
-        api.analytics.departments().then(function(response) {
-            console.log("Departments response:", response);
-            self.renderDepartments(response);
-        }).catch(function(err) {
-            console.error("Error loading departments:", err);
-        });
-        
-        api.analytics.userScores().then(function(response) {
-            console.log("User scores response:", response);
-            self.renderUserScores(response);
-        }).catch(function(err) {
-            console.error("Error loading user scores:", err);
-        });
-        
-        api.analytics.campaigns().then(function(response) {
-            console.log("Campaigns response:", response);
-            self.renderCampaigns(response);
-        }).catch(function(err) {
-            console.error("Error loading campaigns:", err);
         });
     },
     

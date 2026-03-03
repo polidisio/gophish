@@ -21,6 +21,13 @@
         api_key : {{ .User.ApiKey }},
         username : {{ .User.Username }}
     }
+    // Store API key in localStorage for access by analytics
+    try {
+        localStorage.setItem('gophish_api_key', {{ .User.ApiKey }});
+        localStorage.setItem('gophish_username', {{ .User.Username }});
+    } catch(e) {
+        console.warn('localStorage not available');
+    }
     {{end}}
     {{if .Token}}
         var csrf_token = {{.Token}}

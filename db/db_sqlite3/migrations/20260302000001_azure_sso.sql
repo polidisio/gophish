@@ -1,4 +1,5 @@
--- +migrate Up
+-- +goose Up
+-- SQL in section 'Up' is executed when this migration is applied
 -- OAuth Providers table
 CREATE TABLE IF NOT EXISTS oauth_providers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -9,7 +10,7 @@ CREATE TABLE IF NOT EXISTS oauth_providers (
     tenant_id VARCHAR(100) NOT NULL,
     redirect_url VARCHAR(500) NOT NULL,
     scopes VARCHAR(500) NOT NULL,
-    enabled BOOLEAN DEFAULT 0,
+    enabled INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -28,9 +29,10 @@ CREATE TABLE IF NOT EXISTS azure_ad_users (
     manager_id VARCHAR(255),
     last_synced_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_email (email)
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_azure_ad_users_email ON azure_ad_users(email);
 
 -- Sync Status table
 CREATE TABLE IF NOT EXISTS sync_status (
@@ -45,11 +47,11 @@ CREATE TABLE IF NOT EXISTS sync_status (
     failed_users INTEGER DEFAULT 0,
     status VARCHAR(20) NOT NULL,
     error_message TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (provider_id) REFERENCES oauth_providers(id)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- +migrate Down
+-- +goose Down
+-- SQL in section 'Down' is executed when this migration is rolled back
 DROP TABLE IF EXISTS sync_status;
 DROP TABLE IF EXISTS azure_ad_users;
 DROP TABLE IF EXISTS oauth_providers;

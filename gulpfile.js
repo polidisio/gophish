@@ -38,7 +38,8 @@ vendorjs = function () {
             vendor_directory + 'select2.min.js',
             vendor_directory + 'core.min.js',
             vendor_directory + 'highcharts.js',
-            vendor_directory + 'ua-parser.min.js'
+            vendor_directory + 'ua-parser.min.js',
+            vendor_directory + 'chart.min.js'
         ])
         .pipe(concat('vendor.js'))
         .pipe(rename({
@@ -63,7 +64,8 @@ scripts = function () {
             app_directory + 'gophish.js',
             app_directory + 'users.js',
             app_directory + 'webhooks.js',
-            app_directory + 'passwords.js'
+            app_directory + 'passwords.js',
+            app_directory + 'modern_dashboard.js'
         ])
         .pipe(rename({
             suffix: '.min'
@@ -88,6 +90,7 @@ styles = function () {
             css_directory + 'sweetalert2.min.css',
             css_directory + 'select2.min.css',
             css_directory + 'select2-bootstrap.min.css',
+            css_directory + 'modern_dashboard.css',
         ])
         .pipe(cleanCSS({
             compatibilty: 'ie9'

@@ -1,4 +1,5 @@
--- +migrate Up
+-- +goose Up
+-- SQL in section 'Up' is executed when this migration is applied
 -- Migration for modern dashboard analytics
 
 -- User Phishing Score table
@@ -80,7 +81,8 @@ CREATE TABLE IF NOT EXISTS campaign_analytics (
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id)
 );
 
--- +migrate Down
+-- +goose Down
+-- SQL in section 'Down' is executed when this migration is rolled back
 DROP TABLE IF EXISTS user_phishing_scores;
 DROP TABLE IF EXISTS department_metrics;
 DROP TABLE IF EXISTS time_analytics;

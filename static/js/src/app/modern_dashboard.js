@@ -6,6 +6,13 @@
 // Initialize global namespace
 var ModernDashboard = ModernDashboard || {};
 
+// Auto-initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof ModernDashboard !== 'undefined') {
+        ModernDashboard.init();
+    }
+});
+
 // API Configuration
 ModernDashboard.api = {
     baseUrl: '/api',

@@ -49,6 +49,14 @@
             <input type="password" name="password" class="form-control bottom-input" placeholder="Password" autocomplete="off" required>
             <input type="hidden" name="csrf_token" value="{{.Token}}" />
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+            
+            <!-- SSO Login Button -->
+            <div style="margin-top: 20px; text-align: center;">
+                <p style="color: #888; margin-bottom: 10px;">- OR -</p>
+                <a href="/oauth/login" class="btn btn-lg btn-block" style="background: #0078d4; color: white; border-color: #0078d4;">
+                    <i class="fa fa-windows"></i> Sign in with Microsoft Azure AD
+                </a>
+            </div>
         </form>
     </div>
     <!-- Placed at the end of the document so the pages load faster -->

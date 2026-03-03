@@ -1,4 +1,5 @@
--- +migrate Up
+-- +goose Up
+-- SQL in section 'Up' is executed when this migration is applied
 -- OAuth Providers table
 CREATE TABLE IF NOT EXISTS oauth_providers (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -50,7 +51,8 @@ CREATE TABLE IF NOT EXISTS sync_status (
     FOREIGN KEY (provider_id) REFERENCES oauth_providers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- +migrate Down
+-- +goose Down
+-- SQL in section 'Down' is executed when this migration is rolled back
 DROP TABLE IF EXISTS sync_status;
 DROP TABLE IF EXISTS azure_ad_users;
 DROP TABLE IF EXISTS oauth_providers;

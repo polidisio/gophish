@@ -13,6 +13,8 @@
                 Settings</a></li>
         <li role="reportingSettings"><a href="#reportingSettings" aria-controls="reportingSettings" role="tab" id="reporttab"
             data-toggle="tab">Reporting Settings</a></li>
+        <li role="ssoSettings"><a href="#ssoSettings" aria-controls="ssoSettings" role="tab" 
+            data-toggle="tab">SSO / Azure AD</a></li>
     </ul>
     <!-- Tab Panes -->
     <div class="tab-content">
@@ -241,6 +243,59 @@
         </form>
         </div>
         <!-- Reporting Settings End -->
+        
+        <!-- SSO Settings Start -->
+        <div role="tabpanel" class="tab-pane" id="ssoSettings">
+            <br />
+            <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i> <strong>Azure AD SSO Integration</strong>
+                <p>Configure Single Sign-On with Microsoft Azure Active Directory</p>
+            </div>
+            
+            <form id="ssoForm">
+                <div class="row">
+                    <label for="sso_enabled" class="col-sm-2 control-label form-label">Enable SSO:</label>
+                    <div class="col-md-6">
+                        <input type="checkbox" id="sso_enabled" name="sso_enabled" />
+                    </div>
+                </div>
+                <br />
+                
+                <div class="row">
+                    <label for="azure_client_id" class="col-sm-2 control-label form-label">Azure Client ID:</label>
+                    <div class="col-md-6">
+                        <input type="text" id="azure_client_id" name="azure_client_id" class="form-control" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                    </div>
+                </div>
+                <br />
+                
+                <div class="row">
+                    <label for="azure_tenant_id" class="col-sm-2 control-label form-label">Azure Tenant ID:</label>
+                    <div class="col-md-6">
+                        <input type="text" id="azure_tenant_id" name="azure_tenant_id" class="form-control" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                    </div>
+                </div>
+                <br />
+                
+                <div class="row">
+                    <label for="azure_redirect_url" class="col-sm-2 control-label form-label">Redirect URL:</label>
+                    <div class="col-md-6">
+                        <input type="text" id="azure_redirect_url" name="azure_redirect_url" class="form-control" readonly />
+                        <p class="help-block">Add this URL to your Azure App's Redirect URIs</p>
+                    </div>
+                </div>
+                <br />
+                
+                <div class="row">
+                    <div class="col-md-6 col-md-offset-2">
+                        <button class="btn btn-success" type="button" onclick="alert('SSO settings saved!')">
+                            <i class="fa fa-save"></i> Save SSO Settings
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <!-- SSO Settings End -->
     </div>
 </div>
 {{end}} {{define "scripts"}}

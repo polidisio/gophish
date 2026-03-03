@@ -180,6 +180,7 @@ type templateParams struct {
 	Token        string
 	Version      string
 	ModifySystem bool
+	Dashboard    models.DashboardSummary
 }
 
 // newTemplateParams returns the default template parameters for a user and
@@ -208,7 +209,42 @@ func (as *AdminServer) Base(w http.ResponseWriter, r *http.Request) {
 func (as *AdminServer) ModernDashboard(w http.ResponseWriter, r *http.Request) {
 	params := newTemplateParams(r)
 	params.Title = "Analytics Dashboard"
-	getTemplate(w, "modern_dashboard").ExecuteTemplate(w, "base", params)
+	
+	// Debug: log que llegamos aquí
+	log.Infof("ModernDashboard: Loading for user %s", params.User.Username)
+	
+	// Get analytics data directly
+	campaigns, _ := models.GetCampaigns(params.User.Id)
+	var allResults []models.Result
+	var allEvents []models.Event
+	for _, c := range campaigns {
+		cr, _ := models.GetCampaignResults(c.Id, params.User.Id)
+		allResults = append(allResults, cr.Results...)
+		events, _ := models.GetEvents(c.Id)
+		allEvents = append(allEvents, events...)
+	}
+	
+	analyticsService := models.NewAnalyticsService()
+	summary := analyticsService.CalculateDashboardSummary(campaigns, allResults, allEvents)
+	
+	log.Infof("Dashboard: %d campaigns, %d results", len(campaigns), len(allResults))
+	
+	// Add analytics to params
+	params.Dashboard = summary
+	
+	// Debug: verificar que el template existe
+	tmpl := getTemplate(w, "modern_dashboard")
+	if tmpl == nil {
+		log.Error("Failed to load modern_dashboard template")
+		http.Error(w, "Template error", 500)
+		return
+	}
+	
+	log.Infof("Template loaded successfully, executing...")
+	err := tmpl.ExecuteTemplate(w, "base", params)
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 // Campaigns handles the default path and template execution

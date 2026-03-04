@@ -1,0 +1,26 @@
+[Unit]
+Description=Gophish Phishing Framework
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/gophish
+ExecStart=/opt/gophish/gophish
+Restart=always
+RestartSec=10
+
+# Environment
+Environment=GO_ENV=production
+
+# Logging
+StandardOutput=append:/var/log/gophish/gophish.log
+StandardError=append:/var/log/gophish/gophish.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

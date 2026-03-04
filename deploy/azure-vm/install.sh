@@ -68,26 +68,42 @@ mkdir -p /var/log/gophish
 # Copy Gophish files
 echo -e "${YELLOW}[5/8] Copying Gophish files...${NC}"
 
-# Check if gophish binary exists in current directory
-if [ -f "./gophish" ]; then
-    cp ./gophish ${GOPHISH_DIR}/
+# Find the project root directory (where go.mod is located)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Check multiple possible locations for source code
+PROJECT_ROOT=""
+if [ -f "${SCRIPT_DIR}/../go.mod" ]; then
+    PROJECT_ROOT="${SCRIPT_DIR}/.."
+elif [ -f "${SCRIPT_DIR}/../../go.mod" ]; then
+    PROJECT_ROOT="${SCRIPT_DIR}/../.."
+elif [ -f "./go.mod" ]; then
+    PROJECT_ROOT="."
+fi
+
+# If binary exists, copy it
+if [ -f "${PROJECT_ROOT}/gophish" ]; then
+    cp ${PROJECT_ROOT}/gophish ${GOPHISH_DIR}/
     chmod +x ${GOPHISH_DIR}/gophish
 else
-    echo -e "${YELLOW}Gophish binary not found in current directory.${NC}"
-    echo -e "${YELLOW}Building Gophish from source...${NC}"
+    echo -e "${YELLOW}Gophish binary not found. Building from source...${NC}"
     
     # Check if Go is installed
     if ! command -v go &> /dev/null; then
         echo -e "${RED}Error: Go is not installed${NC}"
-        echo -e "${YELLOW}Please install Go 1.24+ first, or upload the gophish binary manually${NC}"
         exit 1
     fi
     
-    # Get the script directory
-    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-    PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+    if [ -z "$PROJECT_ROOT" ]; then
+        echo -e "${RED}Error: Cannot find project root (go.mod not found)${NC}"
+        echo -e "${YELLOW}Expected go.mod in one of:${NC}"
+        echo -e "  - ${SCRIPT_DIR}/../go.mod"
+        echo -e "  - ${SCRIPT_DIR}/../../go.mod"
+        echo -e "  - ./go.mod"
+        exit 1
+    fi
     
-    cd ${PROJECT_DIR}
+    cd ${PROJECT_ROOT}
     
     # Build Gophish
     echo "Building Gophish for Linux AMD64..."
@@ -102,25 +118,37 @@ else
     fi
 fi
 
+# Determine PROJECT_ROOT if not already set
+if [ -z "$PROJECT_ROOT" ]; then
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    if [ -f "${SCRIPT_DIR}/../go.mod" ]; then
+        PROJECT_ROOT="${SCRIPT_DIR}/.."
+    elif [ -f "${SCRIPT_DIR}/../../go.mod" ]; then
+        PROJECT_ROOT="${SCRIPT_DIR}/../.."
+    elif [ -f "./go.mod" ]; then
+        PROJECT_ROOT="."
+    fi
+fi
+
 # Copy migration files
-if [ -d "./db/db_sqlite3/migrations" ]; then
-    cp -r ./db/db_sqlite3/migrations ${GOPHISH_DIR}/migrations
+if [ -d "${PROJECT_ROOT}/db/db_sqlite3/migrations" ]; then
+    cp -r ${PROJECT_ROOT}/db/db_sqlite3/migrations ${GOPHISH_DIR}/migrations
 fi
 
 # Copy PostgreSQL migrations if they exist
-if [ -d "./deploy/azure-vm/migrations" ]; then
+if [ -d "${PROJECT_ROOT}/deploy/azure-vm/migrations" ]; then
     mkdir -p ${GOPHISH_DIR}/migrations_postgres
-    cp -r ./deploy/azure-vm/migrations/* ${GOPHISH_DIR}/migrations_postgres/
+    cp -r ${PROJECT_ROOT}/deploy/azure-vm/migrations/* ${GOPHISH_DIR}/migrations_postgres/
 fi
 
 # Copy static files
-if [ -d "./static" ]; then
-    cp -r ./static ${GOPHISH_DIR}/
+if [ -d "${PROJECT_ROOT}/static" ]; then
+    cp -r ${PROJECT_ROOT}/static ${GOPHISH_DIR}/
 fi
 
 # Copy templates
-if [ -d "./templates" ]; then
-    cp -r ./templates ${GOPHISH_DIR}/
+if [ -d "${PROJECT_ROOT}/templates" ]; then
+    cp -r ${PROJECT_ROOT}/templates ${GOPHISH_DIR}/
 fi
 
 # Create config.json

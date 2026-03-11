@@ -61,7 +61,14 @@ func LoadConfig(filepath string) (*Config, error) {
 		config.Logging = &log.Config{}
 	}
 	// Choosing the migrations directory based on the database used.
-	config.MigrationsPath = config.MigrationsPath + config.DBName
+	switch config.DBName {
+	case "postgres":
+		config.MigrationsPath = "deploy/azure-vm/migrations/"
+	case "mysql":
+		config.MigrationsPath = config.MigrationsPath + config.DBName
+	default:
+		config.MigrationsPath = config.MigrationsPath + config.DBName
+	}
 	// Explicitly set the TestFlag to false to prevent config.json overrides
 	config.TestFlag = false
 	return config, nil

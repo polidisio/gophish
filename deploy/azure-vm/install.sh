@@ -15,6 +15,7 @@ NC='\033[0m' # No Color
 DOMAIN="gophish.savanamed.com"
 GOPHISH_DIR="/opt/gophish"
 DB_NAME="gophish"
+DB_TYPE="postgres"
 DB_USER="gophish"
 DB_PASS="ChangeMe123!"
 
@@ -81,41 +82,46 @@ elif [ -f "./go.mod" ]; then
     PROJECT_ROOT="."
 fi
 
-# If binary exists, copy it
-if [ -f "${PROJECT_ROOT}/gophish" ]; then
-    cp ${PROJECT_ROOT}/gophish ${GOPHISH_DIR}/
+# Always build from source to ensure correct architecture
+echo -e "${YELLOW}Building Gophish from source for Linux AMD64...${NC}"
+
+# Check if Go is installed
+if ! command -v go &> /dev/null; then
+    echo -e "${RED}Error: Go is not installed${NC}"
+    exit 1
+fi
+
+if [ -z "$PROJECT_ROOT" ]; then
+    echo -e "${RED}Error: Cannot find project root (go.mod not found)${NC}"
+    echo -e "${YELLOW}Expected go.mod in one of:${NC}"
+    echo -e "  - ${SCRIPT_DIR}/../go.mod"
+    echo -e "  - ${SCRIPT_DIR}/../../go.mod"
+    echo -e "  - ./go.mod"
+    exit 1
+fi
+
+# Install CGO dependencies if not present
+if ! command -v gcc &> /dev/null; then
+    echo -e "${YELLOW}Installing CGO dependencies (gcc, sqlite)...${NC}"
+    apt-get update && apt-get install -y gcc libc6-dev libsqlite3-dev
+fi
+
+cd ${PROJECT_ROOT}
+
+# Clean and build Gophish for Linux AMD64
+rm -f gophish
+echo "Building Gophish for Linux AMD64..."
+GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o gophish .
+
+if [ -f "./gophish" ]; then
+    echo -e "${GREEN}Build successful! Verifying architecture...${NC}"
+    file ./gophish
+    cp ./gophish ${GOPHISH_DIR}/
+    cp ./VERSION ${GOPHISH_DIR}/
     chmod +x ${GOPHISH_DIR}/gophish
 else
-    echo -e "${YELLOW}Gophish binary not found. Building from source...${NC}"
-    
-    # Check if Go is installed
-    if ! command -v go &> /dev/null; then
-        echo -e "${RED}Error: Go is not installed${NC}"
-        exit 1
-    fi
-    
-    if [ -z "$PROJECT_ROOT" ]; then
-        echo -e "${RED}Error: Cannot find project root (go.mod not found)${NC}"
-        echo -e "${YELLOW}Expected go.mod in one of:${NC}"
-        echo -e "  - ${SCRIPT_DIR}/../go.mod"
-        echo -e "  - ${SCRIPT_DIR}/../../go.mod"
-        echo -e "  - ./go.mod"
-        exit 1
-    fi
-    
-    cd ${PROJECT_ROOT}
-    
-    # Build Gophish
-    echo "Building Gophish for Linux AMD64..."
-    GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o gophish .
-    
-    if [ -f "./gophish" ]; then
-        cp ./gophish ${GOPHISH_DIR}/
-        chmod +x ${GOPHISH_DIR}/gophish
-    else
-        echo -e "${RED}Error: Build failed${NC}"
-        exit 1
-    fi
+    echo -e "${RED}Error: Build failed${NC}"
+    exit 1
 fi
 
 # Determine PROJECT_ROOT if not already set
@@ -130,15 +136,18 @@ if [ -z "$PROJECT_ROOT" ]; then
     fi
 fi
 
-# Copy migration files
-if [ -d "${PROJECT_ROOT}/db/db_sqlite3/migrations" ]; then
-    cp -r ${PROJECT_ROOT}/db/db_sqlite3/migrations ${GOPHISH_DIR}/migrations
-fi
-
-# Copy PostgreSQL migrations if they exist
-if [ -d "${PROJECT_ROOT}/deploy/azure-vm/migrations" ]; then
-    mkdir -p ${GOPHISH_DIR}/migrations_postgres
-    cp -r ${PROJECT_ROOT}/deploy/azure-vm/migrations/* ${GOPHISH_DIR}/migrations_postgres/
+# Copy migration files based on database type
+if [ "${DB_TYPE}" = "postgres" ]; then
+    # For PostgreSQL, copy migrations from deploy/azure-vm/migrations
+    if [ -d "${PROJECT_ROOT}/deploy/azure-vm/migrations" ]; then
+        mkdir -p ${GOPHISH_DIR}/migrations
+        cp ${PROJECT_ROOT}/deploy/azure-vm/migrations/*.sql ${GOPHISH_DIR}/migrations/
+    fi
+else
+    # For SQLite, copy from db/db_sqlite3/migrations
+    if [ -d "${PROJECT_ROOT}/db/db_sqlite3/migrations" ]; then
+        cp -r ${PROJECT_ROOT}/db/db_sqlite3/migrations ${GOPHISH_DIR}/migrations
+    fi
 fi
 
 # Copy static files
@@ -172,7 +181,7 @@ cat > ${GOPHISH_DIR}/config.json <<EOF
     "db_port": 5432,
     "db_user": "${DB_USER}",
     "db_password": "${DB_PASS}",
-    "migrations_prefix": "db_sqlite3",
+    "migrations_prefix": "db/db_",
     "contact_address": "security@savanamed.com",
     "logging": {
         "level": ""
